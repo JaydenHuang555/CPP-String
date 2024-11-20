@@ -16,6 +16,22 @@ public:
         fill(0);
     }
 
+    String(const byte *cc) : cap(8) , size(0){
+        this->inner = new byte[this->cap];
+        fill(0);
+        byte *c = (byte*)cc;
+        while(*c) add(*(c++));
+    }
+
+    /* copy constructor */
+    String(String &other){
+        this->cap = other.cap;
+        this->size = other.size;
+        this->inner = new byte[this->cap];
+        fill(0);
+        for(int i = 0; i < other.size; i++) inner[i] = other.inner[i];
+    }
+
     ~String(){
         delete[] inner;
     }
