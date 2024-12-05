@@ -44,6 +44,10 @@ public:
         this->cap = other.cap;
     }
 
+    ~String(void){
+        delete[] head;
+    }
+
 
     byte get(unsigned long i){
         if(i > getSize()) throw std::invalid_argument("given index is too big");
