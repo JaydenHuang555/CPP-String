@@ -97,6 +97,31 @@ public:
         return true;
     }
 
+    bool contains(const char *subString){
+        if(!subString) throw std::invalid_argument("given null subString");
+        unsigned long len = strlen(subString);
+        unsigned int passes = 0;
+        String *builder = new String();
+        for(int i = 0; i < getSize(); i++){
+            if(!(i % len) && i) {
+                if(compareTo(*builder)) {
+                    delete builder;
+                    return true;
+                }
+                delete builder;
+                builder = new String();
+                
+            }
+            else *builder += subString[i];
+        }
+        delete builder;
+        return false;
+    }
+
+    bool contains(String &str){
+        return contains(str.head);
+    }
+
     bool compareTo(const byte *cc){
         if(!*cc) throw std::invalid_argument("given string was null");
         for(byte *c = (byte*)cc; *c; c++)
@@ -141,23 +166,8 @@ public:
         return compareToIgnoreCase(str.head, str.getSize());
     }
 
-    bool containsSubString(const char *subString){
-        unsigned long len = strlen(subString);
-        unsigned int passes = 0;
-        String *builder = new String();
-        for(int i = 0; i < getSize(); i++){
-            if(!(i % len) && i) {
-                if(compareTo(*builder)) {
-                    delete builder;
-                    return true;
-                }
-                delete builder;
-                builder = new String();
-                
-            }
-            else *builder += subString[i];
-        }
-        delete builder;
+    unsigned long indexOf(const byte cc){
+        for(byte *c = head; *c; c++) if(*c == cc) return true;
         return false;
     }
 
