@@ -1,4 +1,6 @@
 #pragma once 
+#include <memory>
+#include <new>
 #include <ostream>
 #include <stdexcept>
 
@@ -7,82 +9,162 @@ namespace jay {
 typedef char byte;
 
 class String {
-    unsigned long cap, size;
-    byte *inner;
+    unsigned long cap;
+    byte *head, *tail;
+
+    unsigned int strlen(const byte *cc){
+        byte *c = (byte*)cc;
+        while(*c) c++;
+        return (unsigned int)(c - cc);
+    }
 
 public:
-    String() : cap(8) , size(0) {
-        this->inner = new byte[this->cap];
-        fill(0);
+
+    String &fill(String &str, const char c){
+        for(int i = 0; i < str.cap;i++) str.head[i] = c;
+        return str;
     }
 
-    String(const byte *cc) : cap(8) , size(0){
-        this->inner = new byte[this->cap];
-        fill(0);
-        byte *c = (byte*)cc;
-        while(*c) add(*(c++));
+    String(void) : cap(32) {
+        this->head = new byte[cap];
+        this->tail = head;
+        fill(*this, 0);
     }
 
-    /* copy constructor */
+    String(byte *c) : cap(32) {
+        this->head = new byte[cap];
+        this->tail = head;
+        this->fill(*this, 0);
+        this->add(c);
+    }
+
     String(String &other){
+        this->head = other.head;
+        this->tail = other.tail;
         this->cap = other.cap;
-        this->size = other.size;
-        this->inner = new byte[this->cap];
-        fill(0);
-        for(int i = 0; i < other.size; i++) inner[i] = other.inner[i];
     }
 
-    ~String(){
-        delete[] inner;
+
+    byte get(unsigned long i){
+        if(i > getSize()) throw std::invalid_argument("given index is too big");
+        return head[i];
     }
 
-    void add(const byte c){
-        inner[size++] = c;
-        if(size == cap){
+    byte operator[](unsigned long i){
+        return get(i);
+    }
+
+    String &add(const byte c){
+        *tail++ = c;
+        if(getSize() == cap){
             byte *next = new byte[cap *= 2];
-            fill(next, 0, cap);
-            for(int i =0; i < cap / 2; i++) next[i] = inner[i];
-            delete[] inner;
-            inner = next;
+            fill(*this, 0);
+            for(int i = 0; i < cap / 2; i++) next[i] = head[i];
+            delete[] head;
+            head = next;
+            tail = head + cap / 2;
         }
+        return *this;
     }
 
-    void add(const byte *cc){
-        byte *c = (byte*)cc;
-        while(*c) add(*(c++));
+    String &add(const byte *c){
+        byte *_c = (byte*)c;
+        while(*_c) add(*_c++);
+        return *this;
     }
 
     String &operator+=(const byte c){
-        add(c);
+        return add(c);
+    }
+
+    String &operator+=(const byte *c){
+        return add(c);
+    }
+
+    unsigned long getSize(void){
+        return (unsigned long)(tail - head);
+    }
+
+
+    String &lower(void){
+        for(int i = 0; i < getSize(); i++)
+            if(40 < head[i] && head[i] < 90) head[i] = head[i] + 32;
         return *this;
     }
 
-    String &operator+=(const byte *cc){
-        add(cc);
-        return *this;
+    bool contains(const byte c){
+        for(int i = 0; i < getSize(); i++) if(c == head[i]) return false;
+        return true;
     }
 
-    unsigned long getSize(){
-        return size;
+    bool compareTo(const byte *cc){
+        if(!*cc) throw std::invalid_argument("given string was null");
+        for(byte *c = (byte*)cc; *c; c++)
+            if(*c != head[(c - cc)]) return false;
+        return true;
     }
 
-
-    void fill(String &s, const byte c){
-        for(int i = 0; i < s.cap; i++) inner[i] = c;
+    bool compareTo(String &str){
+        return compareTo(str.head);
     }
 
-    void fill(byte *buff, const byte c, unsigned int s){
-        for(int i = 0; i < s; i++) buff[i] = c;
+    /* prevent overflows*/
+    bool compareToIgnoreCase(const byte *cc, unsigned long size){
+        if(getSize() != size) return false;
+        for(int i = 0; i < getSize(); i++){
+            byte c = cc[i];
+            byte a = head[i];
+
+            if(40 < a && a < 90) a = a + 32;
+            if(40 < c && c < 90) c = c + 32;
+            if(c != a) return false;
+        }
+        return true;
     }
 
-    void fill(const byte c){
-        fill(*this, c);
+    
+    bool compareToIgnoreCase(const byte *cc){
+        
+        byte *c = (byte*)cc;
+        byte *a = head;
+        for(;*c && *a;){
+            if(40 < *a && *a < 90) *a = *a + 32;
+            if(40 < *c && *c < 90) *c = *c + 32;
+            if(*c != *a) break;
+            c++;
+            a++;
+        }
+        return (unsigned int)(*c - *a) == 0;
+    }
+
+    bool compareToIgnoreCase(String &str){
+        return compareToIgnoreCase(str.head, str.getSize());
+    }
+
+    bool containsSubString(const char *subString){
+        unsigned long len = strlen(subString);
+        unsigned int passes = 0;
+        String *builder = new String();
+        for(int i = 0; i < getSize(); i++){
+            if(!(i % len) && i) {
+                if(compareTo(*builder)) {
+                    delete builder;
+                    return true;
+                }
+                delete builder;
+                builder = new String();
+                
+            }
+            else *builder += subString[i];
+        }
+        delete builder;
+        return false;
     }
 
     friend std::ostream &operator<<(std::ostream &stream, const String str){
-        stream << str.inner;
+        stream << str.head;
         return stream;
     }
 
 };
-}; // jay
+} // jay

@@ -4,8 +4,9 @@
 int main(){
     jay::String *str = new jay::String();
 
-    *str += "this is an test";
-    std::cout << *str <<"\n";
+    *str += "this is a test foo bar";
+    // std::cout << str->compareTo("thioihoihoioihoihoihio") <<"\n";
+    printf("%s\n", str->containsSubString("foo bar") == 0 ? "false" : "true");
 
     delete str;
 
