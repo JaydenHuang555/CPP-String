@@ -1,10 +1,16 @@
 #pragma once 
+#include <exception>
+#include <istream>
 #include <memory>
-#include <new>
 #include <ostream>
+#include <sstream>
 #include <stdexcept>
 
 namespace jay {
+
+#ifndef boolean
+#define boolean unsigned int
+#endif
 
 typedef char byte;
 
@@ -39,9 +45,11 @@ public:
     }
 
     String(String &other){
-        this->head = other.head;
-        this->tail = other.tail;
         this->cap = other.cap;
+        this->head = new byte[this->cap];
+        this->tail = head;
+        this->fill(*this, 0);
+        this->add(other);
     }
 
     ~String(void){
@@ -77,12 +85,32 @@ public:
         return *this;
     }
 
+    String &add(String &str){
+        return add(str.head);
+    }
+
+    String &operator+(const byte c){
+        return add(c);
+    }
+
+    String &operator+(const byte *c){
+        return add(c);
+    }
+
+    String &operator+(String &c){
+        return add(c);
+    }
+
     String &operator+=(const byte c){
         return add(c);
     }
 
     String &operator+=(const byte *c){
         return add(c);
+    }
+
+    String &operator+=(String &str){
+        return add(str);
     }
 
     unsigned long getSize(void){
@@ -92,7 +120,7 @@ public:
 
     String &lower(void){
         for(int i = 0; i < getSize(); i++)
-            if(40 < head[i] && head[i] < 90) head[i] = head[i] + 32;
+            if(40 < head[i] && head[i] < 90) head[i] = head[i] + 0x20;
         return *this;
     }
 
@@ -126,33 +154,26 @@ public:
         return contains(str.head);
     }
 
-    bool compareTo(const byte *cc){
-        if(!*cc) throw std::invalid_argument("given string was null");
-        for(byte *c = (byte*)cc; *c; c++)
-            if(*c != head[(c - cc)]) return false;
-        return true;
+    bool equalTo(const byte *cc){
+        return compareTo(cc) == 0;
     }
 
-    bool compareTo(String &str){
+    unsigned int compareTo(const byte *cc){
+        if(!*cc) throw std::invalid_argument("given string was null");
+        byte *c = (byte*)cc;
+        byte *h = (byte*)head;
+        while(*c && *h){
+            if(*c != *h) break;
+        }
+        return *c - *h;
+    }
+
+    unsigned int compareTo(String &str){
         return compareTo(str.head);
     }
 
-    /* prevent overflows*/
-    bool compareToIgnoreCase(const byte *cc, unsigned long size){
-        if(getSize() != size) return false;
-        for(int i = 0; i < getSize(); i++){
-            byte c = cc[i];
-            byte a = head[i];
-
-            if(40 < a && a < 90) a = a + 32;
-            if(40 < c && c < 90) c = c + 32;
-            if(c != a) return false;
-        }
-        return true;
-    }
-
     
-    bool compareToIgnoreCase(const byte *cc){
+    unsigned int compareToIgnoreCase(const byte *cc){
         
         byte *c = (byte*)cc;
         byte *a = head;
@@ -163,16 +184,26 @@ public:
             c++;
             a++;
         }
-        return (unsigned int)(*c - *a) == 0;
+        return (unsigned int)(*c - *a);
     }
 
-    bool compareToIgnoreCase(String &str){
-        return compareToIgnoreCase(str.head, str.getSize());
+    unsigned int compareToIgnoreCase(String &str){
+        return compareToIgnoreCase(str.head);
     }
 
     unsigned long indexOf(const byte cc){
-        for(byte *c = head; *c; c++) if(*c == cc) return true;
-        return false;
+        for(byte *c = head; *c; c++) if(*c == cc) return (unsigned long)(c - cc);
+        throw std::invalid_argument("byte is not found");
+    }
+    
+
+    friend std::istream &operator>>(std::istream &stream, String &str){
+        byte c = stream.get();
+        while(c && c != '\n' && c != EOF){
+             str += c;
+             c = stream.get();
+        }
+        return stream;
     }
 
     friend std::ostream &operator<<(std::ostream &stream, const String str){
@@ -181,4 +212,5 @@ public:
     }
 
 };
+#undef boolean
 } // jay
