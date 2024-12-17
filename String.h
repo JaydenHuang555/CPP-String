@@ -158,7 +158,11 @@ public:
         return compareTo(cc) == 0;
     }
 
-    unsigned int compareTo(const byte *cc){
+    bool equalToIgnoreCase(const byte *cc){
+        return compareToIgnoreCase(cc);
+    }
+
+    int compareTo(const byte *cc){
         if(!*cc) throw std::invalid_argument("given string was null");
         byte *c = (byte*)cc;
         byte *h = (byte*)head;
@@ -168,13 +172,12 @@ public:
         return *c - *h;
     }
 
-    unsigned int compareTo(String &str){
+    int compareTo(String &str){
         return compareTo(str.head);
     }
 
     
-    unsigned int compareToIgnoreCase(const byte *cc){
-        
+    int compareToIgnoreCase(const byte *cc){
         byte *c = (byte*)cc;
         byte *a = head;
         for(;*c && *a;){
@@ -184,10 +187,10 @@ public:
             c++;
             a++;
         }
-        return (unsigned int)(*c - *a);
+        return (int)(*c - *a);
     }
 
-    unsigned int compareToIgnoreCase(String &str){
+    int compareToIgnoreCase(String &str){
         return compareToIgnoreCase(str.head);
     }
 

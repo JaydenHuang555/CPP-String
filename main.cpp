@@ -10,6 +10,8 @@ int main(){
 
     std::cout << *str << "\n";
 
+    std::cout << str->compareToIgnoreCase("tSst") << "\n";
+
     delete str;
 
     return 0;
